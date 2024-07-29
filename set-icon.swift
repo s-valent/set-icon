@@ -45,10 +45,26 @@ func setIcon(_ iconPath: String, for file: String) {
         return
     }
     if let path = getPath(for: file) {
+        replaceIconFile(iconURL, forFile: path)
         print("setting icon for \(file)")
         NSWorkspace.shared.setIcon(icon, forFile: path)
     } else {
         print("file \(file) not found")
+    }
+}
+
+
+func replaceIconFile(_ iconURL: URL, forFile path: String) {
+    guard let plist = NSMutableDictionary(contentsOfFile: "\(path)/Contents/Info.plist") else {
+        print("plist not found for \(path), probably not an application")
+        return
+    }
+    if let iconName = (plist["CFBundleIconFile"] as? String)?.removingSuffix(".icns") {
+        let currentIconURL = URL(fileURLWithPath: "\(path)/Contents/Resources/\(iconName).icns")
+        try? FileManager.default.removeItem(at: currentIconURL)
+        try? FileManager.default.copyItem(at: iconURL, to: currentIconURL)
+    } else {
+        print("plist for \(path) does not contain icon definition (CFBundleIconFile)")
     }
 }
 
